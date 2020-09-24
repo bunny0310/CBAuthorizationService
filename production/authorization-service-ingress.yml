@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress
+spec:
+  tls:
+  - secretName: ssl-cert
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: authorization-service
+          servicePort: 8080
+        path: /users
+      - backend:
+          serviceName: authorization-service
+          servicePort: 8080
+        path: /authorization/*
