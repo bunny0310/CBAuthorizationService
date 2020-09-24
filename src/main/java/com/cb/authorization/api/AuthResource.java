@@ -113,7 +113,7 @@ public class AuthResource {
                 "post",
                 object.toString());
 
-        if(authObject.get("authenticated") == null) {
+        if(authObject.get("authenticated") == (Boolean)false) {
             return Response.status(401).entity(JSONValue.parse("{\"message\" : \"unauthorized\"}")).build();
         }
 
