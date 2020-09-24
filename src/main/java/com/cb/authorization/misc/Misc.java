@@ -25,7 +25,7 @@ public class Misc {
         public static String usersServiceUrl = usersServiceProduction ? "http://35.227.72.50" : "http://localhost";
 
         public static Boolean authServiceProduction = true;
-        public static String authServiceUrl = authServiceProduction ? "http://35.227.72.50" : "http://localhost";
+        public static String authServiceUrl = authServiceProduction ? "http://35.185.118.209" : "http://localhost";
     }
     public static class HttpRequest {
         public static JSONObject createRequest(String endpoint, String method, String body) throws IOException {
