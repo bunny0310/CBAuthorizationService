@@ -1,5 +1,7 @@
 package com.cb.authorization.database.models;
 
+import org.json.simple.JSONObject;
+
 import java.sql.Timestamp;
 
 public class User extends BaseEntity{
@@ -22,6 +24,36 @@ public class User extends BaseEntity{
         this.password = password;
         this.schoolName = schoolName;
         this.companyName = companyName;
+    }
+
+    public void parseObject(JSONObject object) {
+        if(object.containsKey("id")) {
+            this.setId((int) object.get("id"));
+        }
+        if(object.containsKey("createdAt")) {
+            this.setCreatedAt((Timestamp) object.get("createdAt"));
+        }
+        if(object.containsKey("updatedAt")) {
+            this.setUpdatedAt((Timestamp)object.get("updatedAt"));
+        }
+        if(object.containsKey("firstName")) {
+            this.setFirstName((String)object.get("firstName"));
+        }
+        if(object.containsKey("lastName")) {
+            this.setLastName((String)object.get("lastName"));
+        }
+        if(object.containsKey("email")) {
+            this.setEmail((String)object.get("email"));
+        }
+        if(object.containsKey("password")) {
+            this.setPassword((String)object.get("password"));
+        }
+        if(object.containsKey("schoolName")) {
+            this.setSchoolName((String)object.get("schoolName"));
+        }
+        if(object.containsKey("companyName")) {
+            this.setCompanyName((String)object.get("companyName"));
+        }
     }
 
     public String getFirstName() {

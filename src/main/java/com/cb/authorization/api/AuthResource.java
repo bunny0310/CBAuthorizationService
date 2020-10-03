@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.net.URI;
 
@@ -46,6 +47,7 @@ import static java.lang.System.exit;
 public class AuthResource {
     private LRUCache<String, String> cache= new LRUCache<String, String>(10);
     private LRUCache<String, String> tokenCache= new LRUCache<String, String>(10);
+    private LRUCache<String, Object> userCache= new LRUCache<String, Object>(10);
     private Sha256Generator hashGen = new Sha256Generator();
     private Auth auth;
 
@@ -55,11 +57,27 @@ public class AuthResource {
 
     @POST()
     @Path("/generateToken")
-    public Response auth(User user) {
+    public Response auth(User user) throws ClientProtocolException, IOException{
         String hash = "-1";
         String cachedHash = cache.get(user.getEmail());
+        Object retrievedUser = userCache.get(user.getEmail());
+        JsonObject object = new JsonObject();
+        object.addProperty("email", user.getEmail());
+        if(retrievedUser == null) {
+            retrievedUser = Misc.HttpRequest.createRequest(
+                    Misc.Config.usersServiceUrl + ":8080/api/v1/users/searchByEmail",
+                    "post",
+                    object.toString());
+            userCache.put(user.getEmail(), retrievedUser);
+        }
+        //generate the final user-hash object
+        ArrayList<KeyValPair> listPairs = new ArrayList();
+        listPairs.add(new Misc().new KeyValPair("user", retrievedUser.toString()));
+
         if(cachedHash != null) {
-            return Response.status(200).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("hash", cachedHash))).build();
+            listPairs.add(new Misc().new KeyValPair("hash", cachedHash));
+            Object obj = Misc.JSON.createJSON(listPairs);
+            return Response.status(200).entity(obj.toString()).build();
         }
         try {
             hash = hashGen.toHexString(hashGen.getSHA(user.getEmail()));
@@ -78,8 +96,13 @@ public class AuthResource {
         if(!hash.equals("error")) {
             cache.put(user.getEmail(), hash);
         }
-        return hash.equals("error") ? Response.status(500).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("message", "token saving error"))).build()
-        : Response.status(200).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("hash", hash))).build();
+        if(hash.equals("error")) {
+            return Response.status(500).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("message", "token saving error"))).build();
+        }
+        ArrayList<KeyValPair> arrayList = new ArrayList();
+        arrayList.add(new Misc().new KeyValPair("user", retrievedUser.toString()));
+        arrayList.add(new Misc().new KeyValPair("hash", hash));
+        return Response.status(200).entity(Misc.JSON.createJSON(arrayList).toString()).build();
     }
 
     @GET()
