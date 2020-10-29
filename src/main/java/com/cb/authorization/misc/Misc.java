@@ -12,6 +12,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,11 +30,13 @@ public class Misc {
         public static String authServiceUrl = authServiceProduction ? "http://35.185.118.209" : "http://localhost";
     }
     public static class HttpRequest {
+        private static Logger logger = LoggerFactory.getLogger("info");
         public static JSONObject createRequest(String endpoint, String method, String body) throws IOException {
             HttpClient httpclient = HttpClients.createDefault();
             HttpResponse response = null;
             HttpEntity httpEntity = null;
             String apiOutput = "";
+            logger.info("body: " + body);
             if(method.equals("post")) {
                 HttpPost httpPost = new HttpPost(endpoint);
                 httpPost.addHeader("accept", "application/json");
@@ -55,6 +59,7 @@ public class Misc {
             }catch (Exception e) {
                 System.out.println(e + "");
             }
+            logger.info("JSON Is" + json);
             return json;
         }
     }

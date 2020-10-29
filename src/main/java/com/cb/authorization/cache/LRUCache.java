@@ -1,5 +1,9 @@
 package com.cb.authorization.cache;
 
+import com.cb.authorization.MainApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 
 public class LRUCache<T1, T2> {
@@ -9,6 +13,9 @@ public class LRUCache<T1, T2> {
 
     //declare a hashmap
     HashMap<T1, Node> map;
+
+    //logging
+    Logger logger = LoggerFactory.getLogger(MainApplication.class);
 
     //declare a variable to store the capacity allowed
     int capacity;
@@ -47,6 +54,15 @@ public class LRUCache<T1, T2> {
             return (T2) ret.val;
         }
         return null;
+    }
+
+    public void remove(T1 key) {
+        Node rem =  map.containsKey(key) ? map.get(key) : null;
+
+        if(rem != null) {
+            removeNode(rem);
+            map.remove(key);
+        }
     }
 
     public void put(T1 key, T2 val) {
