@@ -165,7 +165,7 @@ public class AuthResource {
         //if authorization verified then generate the token by calling the auth method
         Response generatedToken = auth(user);
 
-        return Response.status(200).entity(generatedToken).build();
+        return Response.status(200).entity(generatedToken.getEntity()).build();
     }
 
     @POST()
