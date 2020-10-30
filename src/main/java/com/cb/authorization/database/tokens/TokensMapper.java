@@ -14,7 +14,8 @@ public class TokensMapper implements ResultSetMapper<Token> {
 
         Token user = new Token(
                 r.getString("email"),
-                r.getString("token")
+                r.getString("token"),
+                r.getTimestamp("createdAt")
         );
 
         return user;

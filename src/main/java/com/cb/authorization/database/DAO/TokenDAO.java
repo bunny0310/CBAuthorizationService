@@ -20,4 +20,7 @@ public interface TokenDAO {
 
     @SqlQuery("SELECT * FROM tokens WHERE email = :email")
     public List<Token> getToken(@Bind("email") final String email);
+
+    @SqlUpdate("DELETE FROM tokens WHERE TIMESTAMPDIFF(HOUR, createdAt, current_timestamp) >= 4")
+    public void deleteExpiredTokens();
 }

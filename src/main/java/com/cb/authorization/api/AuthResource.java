@@ -1,5 +1,6 @@
 package com.cb.authorization.api;
 
+import com.cb.authorization.MainApplication;
 import com.cb.authorization.cache.LRUCache;
 import com.cb.authorization.database.models.Token;
 import com.cb.authorization.database.models.User;
@@ -18,6 +19,8 @@ import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.net.URI;
 
@@ -37,6 +40,8 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.System.exit;
 
@@ -45,9 +50,11 @@ import static java.lang.System.exit;
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthResource {
     private LRUCache<String, String> cache= new LRUCache<String, String>(10);
-    private LRUCache<String, String> tokenCache= new LRUCache<String, String>(10);
+    private LRUCache<String, Token> tokenCache= new LRUCache<String, Token>(10);
+    private LRUCache<String, Object> userCache= new LRUCache<String, Object>(10);
     private Sha256Generator hashGen = new Sha256Generator();
     private Auth auth;
+    Logger logger = LoggerFactory.getLogger("info");
 
     public AuthResource(Auth auth) {
         this.auth = auth;
@@ -55,11 +62,33 @@ public class AuthResource {
 
     @POST()
     @Path("/generateToken")
-    public Response auth(User user) {
+    public Response auth(User user) throws ClientProtocolException, IOException{
+        logger.info("inside generate token");
         String hash = "-1";
         String cachedHash = cache.get(user.getEmail());
+        Object retrievedUser = userCache.get(user.getEmail());
+        JsonObject object = new JsonObject();
+        object.addProperty("email", user.getEmail());
+        if(retrievedUser == null) {
+            //fetch the user from the database
+            retrievedUser = Misc.HttpRequest.createRequest(
+                    Misc.Config.usersServiceUrl + ":8080/api/v1/users/searchByEmail",
+                    "post",
+                    object.toString());
+
+            //write it to the cache
+            userCache.put(user.getEmail(), retrievedUser);
+
+            logger.info("retrieved user: " + retrievedUser);
+        }
+        //generate the final user-hash object
+        ArrayList<KeyValPair> listPairs = new ArrayList();
+        listPairs.add(new Misc().new KeyValPair("user", retrievedUser.toString()));
+
         if(cachedHash != null) {
-            return Response.status(200).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("hash", cachedHash))).build();
+            listPairs.add(new Misc().new KeyValPair("hash", cachedHash));
+            Object obj = Misc.JSON.createJSON(listPairs);
+            return Response.status(200).entity(obj.toString()).build();
         }
         try {
             hash = hashGen.toHexString(hashGen.getSHA(user.getEmail()));
@@ -78,24 +107,40 @@ public class AuthResource {
         if(!hash.equals("error")) {
             cache.put(user.getEmail(), hash);
         }
-        return hash.equals("error") ? Response.status(500).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("message", "token saving error"))).build()
-        : Response.status(200).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("hash", hash))).build();
+        if(hash.equals("error")) {
+            return Response.status(500).entity(Misc.JSON.createJSON(new Misc().new KeyValPair("message", "token saving error"))).build();
+        }
+        ArrayList<KeyValPair> arrayList = new ArrayList();
+        arrayList.add(new Misc().new KeyValPair("user", retrievedUser.toString()));
+        arrayList.add(new Misc().new KeyValPair("hash", hash));
+        return Response.status(200).entity(Misc.JSON.createJSON(arrayList).toString()).build();
     }
 
     @GET()
     @Path("/isAuthorized/{token}")
     public Response isAuthorized(@PathParam("token") final String token) {
         JsonObject object = new JsonObject();
+        Logger logger = LoggerFactory.getLogger(MainApplication.class);
+
+        //check if the timeDiff is more than 4 hours and remove the token if expired from the cache
+        long diff = !tokenCache.contains(token) ? -1 : tokenCache.get(token).getCreatedAt().getTime() - new Timestamp(System.currentTimeMillis()).getTime();
+
+        if(tokenCache.contains(token) && Math.abs(diff / 3600000) >= 4) {
+            logger.info("removing token");
+            tokenCache.remove(token);
+        }
+
         if(tokenCache.contains(token)) {
             object.addProperty("success", 1);
             return Response.status(200).entity(object.toString()).build();
         }
+
         List<Token> result = auth.verifyToken(token);
         if(result.size() != 1) {
             object.addProperty("success", 0);
             return Response.status(401).entity(object.toString()).build();
         }
-        tokenCache.put(token, result.get(0).getEmail());
+        tokenCache.put(token, result.get(0));
         object.addProperty("success", 1);
         return Response.status(200).entity(object.toString()).build();
     }
@@ -117,11 +162,16 @@ public class AuthResource {
             return Response.status(401).entity(JSONValue.parse("{\"message\" : \"unauthorized\"}")).build();
         }
 
-        //if authorization verified then generate the token
-        JSONObject tokenObject = Misc.HttpRequest.createRequest(
-                Misc.Config.authServiceUrl + ":8080/api/v1/auth/generateToken",
-                "post",
-                object.toString());
-        return Response.status(200).entity(tokenObject).build();
+        //if authorization verified then generate the token by calling the auth method
+        Response generatedToken = auth(user);
+
+        return Response.status(200).entity(generatedToken).build();
+    }
+
+    @POST()
+    @Path("/deleteExpiredTokens")
+    public Response delete() {
+        auth.deleteExpiredTokens();
+        return Response.status(200).entity("done").build();
     }
 }

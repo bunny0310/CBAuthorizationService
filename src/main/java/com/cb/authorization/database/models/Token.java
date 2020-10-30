@@ -1,17 +1,29 @@
 package com.cb.authorization.database.models;
 
+import java.sql.Timestamp;
+
 public class Token{
 
     private String email;
     private String token;
+    private Timestamp createdAt;
 
     public Token() {
 
     }
 
-    public Token(String email, String token) {
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Token(String email, String token, Timestamp createdAt) {
         this.email = email;
         this.token = token;
+        this.createdAt = createdAt;
     }
 
     public String getEmail() {
