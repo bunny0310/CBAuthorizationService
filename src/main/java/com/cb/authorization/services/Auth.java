@@ -24,4 +24,8 @@ public class Auth {
         return tokenDAO.getToken(email);
     }
 
+    public void deleteExpiredTokens() {
+         tokenDAO.deleteExpiredTokens();
+    }
+
 }
