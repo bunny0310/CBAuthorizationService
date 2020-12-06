@@ -72,7 +72,7 @@ public class AuthResource {
         if(retrievedUser == null) {
             //fetch the user from the database
             retrievedUser = Misc.HttpRequest.createRequest(
-                    Misc.Config.usersServiceUrl + ":8080/api/v1/users/searchByEmail",
+                    Misc.Config.usersServiceUrl + "/api/v1/users/searchByEmail",
                     "post",
                     object.toString());
 
@@ -154,7 +154,7 @@ public class AuthResource {
 
         //send a request to users microservice
         JSONObject authObject = Misc.HttpRequest.createRequest(
-                Misc.Config.usersServiceUrl + ":8080/api/v1/users/login",
+                Misc.Config.usersServiceUrl + "/api/v1/users/login",
                 "post",
                 object.toString());
 
