@@ -24,10 +24,10 @@ public class Misc {
     }
     public static class Config {
         public static Boolean usersServiceProduction = true;
-        public static String usersServiceUrl = usersServiceProduction ? "http://35.227.72.50" : "http://localhost";
+        public static String usersServiceUrl = usersServiceProduction ? "http://ramen-users-service.herokuapp.com" : "http://localhost";
 
         public static Boolean authServiceProduction = true;
-        public static String authServiceUrl = authServiceProduction ? "http://35.185.118.209" : "http://localhost";
+        public static String authServiceUrl = authServiceProduction ? "http://ramen-authorization-service.herokuapp.com" : "http://localhost";
     }
     public static class HttpRequest {
         private static Logger logger = LoggerFactory.getLogger("info");
