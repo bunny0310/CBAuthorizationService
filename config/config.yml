@@ -1,13 +1,14 @@
 database:
   driverClass: com.mysql.cj.jdbc.Driver
   # the username
-  user: befd6909b06250
+  user: root
 
   # the password
-  password: f01905aa
+  password: ishaan123
 
   # the JDBC URL
-  url: jdbc:mysql://us-cdbr-east-02.cleardb.com:3306/heroku_68337d006763af9?useLegacyDatetimeCode=false&serverTimezone=UTC&autoReconnect=true
+  url: jdbc:mysql://database-1.cnx711jywpdh.us-east-2.rds.amazonaws.com:3306/db?useSSL=false
+
   # any properties specific to your JDBC driver:
   properties:
     charSet: UTF-8
@@ -36,6 +37,12 @@ database:
   # the minimum amount of time an connection must sit idle in the pool before it is eligible for eviction
   minIdleTime: 1 minute
 
+server:
+  type: default
+  applicationConnectors:
+    -   type: http
+        port: 8080
+
   # Logging settings.
 #logging:
 #  level: INFO
@@ -52,9 +59,3 @@ database:
 #  appenders:
 #    - type: console
 #      logFormat: "%highlight(%-5level) [%magenta(%date)] [%thread] [%cyan(%logger{0})]: %message%n"
-
-server:
-  type: default
-  applicationConnectors:
-    -   type: http
-        port: 8080
