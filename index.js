@@ -67,7 +67,9 @@ app.post('/api/v1/auth/', (req, res) => {
     .then((response) => {
         if(response.status === 201) {
             const payload = {
-                username: userDetails.email
+                name: response.data.data.name,
+                id: response.data.data.id,
+                email: response.data.data.email
             }
             const options = {
                 subject: userDetails.email,
